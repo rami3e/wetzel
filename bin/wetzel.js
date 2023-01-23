@@ -1,40 +1,42 @@
 #!/usr/bin/env node
 "use strict";
-const fs = require('fs');
-const path = require('path');
-const argv = require('minimist')(process.argv.slice(2), { boolean : ["w", "suppresswarnings" ]});
-const defined = require('../lib/defined');
-const defaultValue = require('../lib/defaultValue');
-const enums = require('../lib/enums');
-const generateMarkdown = require('../lib/generateMarkdown');
+var fs = require('fs');
+var path = require('path');
+var argv = require('minimist')(process.argv.slice(2), { boolean : ["w", "suppresswarnings" ]});
+var defined = require('../lib/defined');
+var defaultValue = require('../lib/defaultValue');
+var enums = require('../lib/enums');
+var generateMarkdown = require('../lib/generateMarkdown');
 
 if (!defined(argv._[0]) || defined(argv.h) || defined(argv.help)) {
-    const help = `Usage: node ${  path.basename(__filename)  } [path-to-json-schema-file] [OPTIONS]\n` +
-        `  -l,  --headerLevel        Top-level header. Default: 1\n` +
-        `  -c,  --checkmark          Symbol for required properties. Default: &#10003;\n` +
-        `  -k,  --keyword            Use a particular keyword in place of "must", for example "**MUST**".\n` +
-        `  -p,  --schemaPath         The path string that should be used when generating the schema reference paths.\n` +
-        `  -s,  --searchPath         The path string that should be used when loading the schema reference paths.\n` +
-        `  -e,  --embedOutput        The output path for a document that embeds JSON schemas directly (AsciiDoctor only).\n` +
-        `  -m,  --outputMode         The output mode, Markdown (the default) or AsciiDoctor (a).\n` +
-        `  -n,  --noTOC              Skip writing the Table of Contents.\n` +
-        `  -a,  --autoLink           Aggressively auto-inter-link types referenced in descriptions.\n` +
-        `                                Add =cqo to auto-link types that are in code-quotes only.\n` +
-        `  -i                        An array of schema filenames (no paths) that should not get their own\n` +
-        `                                table of contents entry, nor type listing (they are just used for\n` +
-        `                                sharing properties across multiple other schemas)\n` +
-        `  -d,  --debug              Provide a path, and this will save out intermediate processing\n` +
-        `                                artifacts useful in debugging wetzel.\n` +
-        `  -w,  --suppressWarnings   Will not print out WETZEL_WARNING strings indicating identified\n` +
-        `                                conversion problems. Default: false\n`;
+    var help = 'Usage: node ' + path.basename(__filename) + ' [path-to-json-schema-file] [OPTIONS]\n' +
+        '  -l,  --headerLevel        Top-level header. Default: 1\n' +
+        '  -c,  --checkmark          Symbol for required properties. Default: &#10003;\n' +
+        '  -k,  --keyword            Use a particular keyword in place of "must", for example "**MUST**".\n' +
+        '  -p,  --schemaPath         The path string that should be used when generating the schema reference paths.\n' +
+        '  -s,  --searchPath         The path string that should be used when loading the schema reference paths.\n' +
+        '  -e,  --embedOutput        The output path for a document that embeds JSON schemas directly (AsciiDoctor only).\n' +
+        '  -m,  --outputMode         The output mode, Markdown (the default) or AsciiDoctor (a).\n' +
+        '  -n,  --noTOC              Skip writing the Table of Contents.\n' +
+        '  -a,  --autoLink           Aggressively auto-inter-link types referenced in descriptions.\n' +
+        '                                Add =cqo to auto-link types that are in code-quotes only.\n' +
+        '  -i                        An array of schema filenames (no paths) that should not get their own\n' +
+        '                                table of contents entry, nor type listing (they are just used for\n' +
+        '                                sharing properties across multiple other schemas)\n' +
+        '  -d,  --debug              Provide a path, and this will save out intermediate processing\n' +
+        '                                artifacts useful in debugging wetzel.\n' +
+        '  -w,  --suppressWarnings   Will not print out WETZEL_WARNING strings indicating identified\n' +
+        '                                conversion problems. Default: false\n' +
+        '  --describeEnums            List enum values in the description column of the summary table. Default: false\n' +
+        '  --summary                 Only write the summary and skip the detailed section, useful for a more concise documentation. Default: false\n';
     process.stdout.write(help);
     return;
 }
 
-const filepath = argv._[0];
-const schema = JSON.parse(fs.readFileSync(filepath));
+var filepath = argv._[0];
+var schema = JSON.parse(fs.readFileSync(filepath));
 
-let autoLink = enums.autoLinkOption.off;
+var autoLink = enums.autoLinkOption.off;
 switch (defaultValue(argv.a, argv.autoLink)) {
     case true:
         autoLink = enums.autoLinkOption.aggressive;
@@ -45,7 +47,7 @@ switch (defaultValue(argv.a, argv.autoLink)) {
         break;
 }
 
-let styleModeArgument = defaultValue(argv.m, argv.outputMode);
+var styleModeArgument = defaultValue(argv.m, argv.outputMode);
 if (styleModeArgument === 'a' || styleModeArgument === '=a') {
     styleModeArgument = enums.styleModeOption.AsciiDoctor;
 }
@@ -53,19 +55,19 @@ if (styleModeArgument === 'a' || styleModeArgument === '=a') {
 // We're expecting users to pass in an array as a "string", but we aren't expecting them
 // to pass it in as a correctly JSON-escaped string.  Therefore, we need to replace single
 // or double-quotes with a backslash-double-quote, and then we can parse the object.
-let ignorableTypesString = defaultValue(argv.i, '[]');
+var ignorableTypesString = defaultValue(argv.i, '[]');
 ignorableTypesString = ignorableTypesString.replace(/'/g, '\"');
 ignorableTypesString = ignorableTypesString.replace(/"/g, '\"');
-const ignorableTypes = JSON.parse(ignorableTypesString);
+var ignorableTypes = JSON.parse(ignorableTypesString);
 
-const searchPath = ['', path.dirname(filepath)];
+var searchPath = ['', path.dirname(filepath)];
 if (defined(argv.s) || defined(argv.searchPath)) {
     searchPath.push(defaultValue(argv.s, argv.searchPath));
 }
 
-const embedOutput = defaultValue(defaultValue(argv.e, argv.embedOutput), null);
+var embedOutput = defaultValue(defaultValue(argv.e, argv.embedOutput), null);
 
-const options = {
+var options = {
     schema: schema,
     filePath: filepath,
     fileName: path.basename(filepath),
@@ -80,7 +82,9 @@ const options = {
     debug: defaultValue(defaultValue(argv.d, argv.debug), null),
     suppressWarnings: defaultValue(defaultValue(argv.w, argv.suppressWarnings), false),
     autoLink: autoLink,
-    ignorableTypes: ignorableTypes
+    ignorableTypes: ignorableTypes,
+    describeEnums: defaultValue(argv.describeEnums, false),
+    summaryOnly: defaultValue(argv.summary, false)
 };
 
 if (defined(embedOutput)) {
